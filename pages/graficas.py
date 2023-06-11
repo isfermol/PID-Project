@@ -165,7 +165,7 @@ def grafica_donut(df, year, month):
         nameProv = [ptov[3:] for ptov in top_provincias['Provincias']]
         namecom = [com[3:] for com in data_comunidades.index]
         ax.legend(wedges, nameProv, loc="upper right", title='Provincias', bbox_to_anchor=(1.4, 1))
-        ax2.legend(wedges2,namecom, loc="center right", title='Comunidades Autónomas', bbox_to_anchor=(3.9,0.5))
+        ax2.legend(wedges2,namecom, loc="center right", title='Comunidades Autónomas', bbox_to_anchor=(3.9,0.3))
         for autotext in autotexts2:
             autotext.set_horizontalalignment('center')
             autotext.set_verticalalignment('center')

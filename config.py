@@ -1,2 +1,2 @@
-# openai_api_key = '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'
+openai_api_key = ''
 answer_text = ''

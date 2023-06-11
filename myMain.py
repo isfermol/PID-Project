@@ -182,7 +182,6 @@ year, month = display_filtros(df_nacional_inter, origen)
 prov_name = display_provincia(df_nacional_inter, '')
 prov_code= display_map(df_nacional_inter, year, month, origen)
 
-st.write(st.session_state['desplegable'], prov_name, st.session_state['desplegable'] != prov_name, prov_code)
 
 if st.session_state['desplegable'] != prov_name or prov_code == '00':
         # prov_name = prov_dict[]
