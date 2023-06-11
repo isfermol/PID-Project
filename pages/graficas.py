@@ -124,13 +124,18 @@ def display_evolucion_empleo(df, df_empl, codProv, provin):
     sns.set(style='darkgrid')
     plt.figure(figsize=(12, 6))
     ax1 = sns.lineplot(data=df_o, x='año', y='Ambos_origenes',color='gold')
+    # ax1.set_xticklabels(rotation=45)
     ax2 = ax1.twinx()
     ax2 = sns.barplot(data=df_e, x='año', y='Personal empleado', color='lightblue', alpha=0.4, ax=ax2)
     ax1.set_ylabel('Turismo', color='gold')
     ax2.set_ylabel('Personal empleado', color='lightblue')
+    # ax2.set_xticklabels(rotation=45)
     plt.title(f'Evolución temporal de Turismo y Personal empleado en hostelería en {provin}')
     plt.xlabel('Año')
-    plt.xticks(rotation=45)
+    for item in ax2.get_xticklabels():
+        item.set_rotation(45)
+    for item in ax1.get_xticklabels():
+        item.set_rotation(45)
     st.pyplot(plt.gcf())
 
 
@@ -159,9 +164,8 @@ def grafica_donut(df, year, month):
         wedges2, text2,autotexts2 = ax2.pie(data_comunidades, colors=[mapa_colores_comunidades[com] for com in data_comunidades.index], radius=2.2,wedgeprops=dict(width=0.3), startangle=-40, autopct='%1.1f%%')
         nameProv = [ptov[3:] for ptov in top_provincias['Provincias']]
         namecom = [com[3:] for com in data_comunidades.index]
-        ax.legend(wedges, nameProv, loc="upper right", bbox_to_anchor=(1.4, 1))
-        ax2.legend(wedges2,namecom, loc="center right", bbox_to_anchor=(3.9,0.5))
-
+        ax.legend(wedges, nameProv, loc="upper right", title='Provincias', bbox_to_anchor=(1.4, 1))
+        ax2.legend(wedges2,namecom, loc="center right", title='Comunidades Autónomas', bbox_to_anchor=(3.9,0.5))
         for autotext in autotexts2:
             autotext.set_horizontalalignment('center')
             autotext.set_verticalalignment('center')
