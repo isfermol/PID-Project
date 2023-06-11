@@ -61,7 +61,6 @@ python-lsp-jsonrpc==1.0.0
 python-utils==3.6.0
 pytz==2023.3
 pytz-deprecation-shim==0.1.0.post0
-pywin32==305.1
 PyYAML==6.0
 requests==2.31.0
 rich==13.4.1
