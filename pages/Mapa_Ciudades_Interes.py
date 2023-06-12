@@ -12,7 +12,6 @@ import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 
 
-
 st.set_page_config(page_title= "Puntos turísticos", page_icon = ":hotel:", layout = 'wide', initial_sidebar_state = 'auto')
 st.title("Mapa de histórico de puntos turísticos")
 @st.cache_data
