@@ -15,6 +15,10 @@
 
     * Pregunta :question::
         * Se puede hacer una pregunta sobre los datos mostrados en esta p&aacute;gina y el modelo de lenguaje de chat_GPT acceder&aacute; a la base de datos haciendo uso de langchain y contestar&aacute; la pregunta.
+    
+> [!NOTA]
+   >
+   >En los radio button *mapa* se puede cambiar la opci&oacute;n para cargar un mapa de coropletas y la informaci&oacute;n anterior por **provincias** o por **comunidades aut&oacute;nomas**.
 
 2.  En la p&aacute;gina de gr&aacute;fica se podr&aacute; acceder a dos subp&aacute;ginas	:chart_with_upwards_trend::
   * Gr&aacute;ficas de ocupaci&oacute;n :hotel:: 
