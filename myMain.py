@@ -16,9 +16,11 @@ import sqlalchemy.pool
 
 APP_TITLE = 'Ocupación hotelera en España'
 APP_SUB_TITLE = 'Fuente: Ine'
+
+#modeifico esta variable para que al hacer click en el mapa para seleccionar provincia no se inhabilite el desplegable provincia
 if 'desplegable' not in st.session_state:
     st.session_state['desplegable'] = None
-
+#muestro los controles
 @st.cache_data
 def get_keys_with_value(dic, value):
     
@@ -123,11 +125,12 @@ def display_grafica(df, year, month, origen, codProvin, provincia):
     st.pyplot(fig)
 
     
-
+#título e icono de la pagina
 st.set_page_config(page_title= APP_TITLE, page_icon = ":hotel:", layout = 'wide', initial_sidebar_state = 'auto')
 st.title(APP_TITLE)
 st.caption(APP_SUB_TITLE)
 
+#cargo y formateo los datos
 df3 = pd.read_csv(r'2074.csv',sep=';',encoding="utf-8",on_bad_lines='skip')
 
 
@@ -182,7 +185,7 @@ year, month = display_filtros(df_nacional_inter, origen)
 prov_name = display_provincia(df_nacional_inter, '')
 prov_code= display_map(df_nacional_inter, year, month, origen)
 
-
+#compruebo si ha cambiado el valor del desplegable o si la modificación de la provincia se ha hecho en el mapa
 if st.session_state['desplegable'] != prov_name or prov_code == '00':
         # prov_name = prov_dict[]
         prov_code = get_keys_with_value(prov_dict, prov_name)
@@ -195,6 +198,7 @@ display_datos_ocup(df_nacional_inter, year, month, origen, prov_code)
 
 display_grafica(df_nacional_inter, year, month, origen, prov_code,prov_dict[prov_code][3:])
 
+#consulto base de datos con openIA para contestar preguntas
 def answer():
     uri = "file::memory:?cache=shared"
     table_name = 'prov_datadb'

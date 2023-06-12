@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import folium
@@ -13,15 +12,17 @@ import matplotlib.ticker as ticker
 import random
 import matplotlib.pyplot as plt
 import networkx as nx
-
+#título e icono de la `´agina`
 st.set_page_config(page_title= "Graficas", page_icon = ":hotel:", layout = 'wide', initial_sidebar_state = 'auto')
+
+#cargo os controles
 @st.cache_data
 def get_keys_with_value(dic, value):
     
     return [key for key in dic if dic[key][3:] == value][0]
 
 def display_origen_filter():
-    return st.sidebar.radio('origen', ['Origen_turismo', 'Personal_empleado'])
+    return st.sidebar.radio('Caegoría de gráficos', ['Origen_turismo', 'Personal_empleado'])
 
 def display_year(df):
     year_list = list(df['año'].unique())
@@ -44,7 +45,7 @@ def display_provincia(df, prov):
     prov_name = st.sidebar.selectbox('Provincia', prov_list)
     return prov_name
 
-
+# método para mostrar los datos de ocupación turística nacional e internacional en las top 15 provincias como si fuera una pirámide poblacional con graficos de barras
 def display_pyramid_top15(df, year):
     df = df[(df['año'] == year)]
 
@@ -92,6 +93,7 @@ def display_pyramid_top15(df, year):
     plt.suptitle(f'Top 15 provincias con mayor ocupación ({year})', fontsize=15, ha='center')
     st.pyplot(fig)
 
+#gráfico comparativo evolución turismo nacional e internaicional
 def display_evolucion_turismo(df, codProv):
     df = df[df['codProv'] == codProv] 
     print(df)
@@ -113,7 +115,7 @@ def display_evolucion_turismo(df, codProv):
     plt.legend(title='Tipo', fontsize=10, title_fontsize=12)
 
     st.pyplot(plt.gcf())
-
+#gráfico comparativo de evolución del empleo en hostelería y num de turistas
 def display_evolucion_empleo(df, df_empl, codProv, provin):
     df = df[df['codProv'] == codProv] 
     df_empl = df_empl[df_empl['codProv'] == codProv] 
@@ -138,7 +140,7 @@ def display_evolucion_empleo(df, df_empl, codProv, provin):
         item.set_rotation(45)
     st.pyplot(plt.gcf())
 
-
+# top 10 provincias y top5 Comunidades con más empleados en hostelería(2 graficas de donut en una)
 def grafica_donut(df, year, month):
     df_year = df[(df['año'] == year) & (df['mes'] == month)]
     print('yeye',df_year)
@@ -176,7 +178,7 @@ def grafica_donut(df, year, month):
         st.write(f"No hay datos para Provincias y CCAA con más empleo en hosteleria en {year}\{month}")
 
 
-
+#cargo y formateo los datos
 
 df3 = pd.read_csv(r'2074.csv',sep=';',encoding="utf-8",on_bad_lines='skip')
 
@@ -244,17 +246,21 @@ df_empleo['codProv'] = df_empleo['codProv'].str.strip()
 df_empleo['codProv'] = df_empleo['codProv'].str[3:7].apply(quitar_acentos)
 
 print(df_empleo)
-
+#depende del tipo de geáfico seleccionado muestro unas gráficas u otras
 tipo = display_origen_filter()
 provincia = display_provincia(df_nacional_inter, '')
 codProvin = get_keys_with_value(prov_dict, provincia)
 if tipo == "Origen_turismo":
     st.header('Graficas Ocupación')
     year = display_year(df_nacional_inter)
+    st.subheader(f'Provincias con mayor ocupación turística')   
     display_pyramid_top15(df_nacional_inter, year)
+    st.subheader(f'Evolución de la ocupación turística')   
     display_evolucion_turismo(df_nacional_inter, codProvin)
 else:
      st.header('Graficas Empleo')
      year, month = display_year_mes(df_empleo)
+     st.subheader(f'Comparativa evolución ocupación turística y personal empleado en hostelería')   
      display_evolucion_empleo(df_nacional_inter,df_empleo, codProvin, provincia)
+     st.subheader(f'provincias y comunidades con mayor empleo en el sector de hostelería')   
      grafica_donut(df_empleo, year, month)
