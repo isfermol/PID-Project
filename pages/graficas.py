@@ -14,13 +14,10 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import myMain
 
-#título e icono de la `´agina`
+#título e icono de la página
 st.set_page_config(page_title= "Graficas", page_icon = ":hotel:", layout = 'wide', initial_sidebar_state = 'auto')
 
 #cargo los controles
-# @st.cache_data
-# def get_keys_with_value(dic, value):
-#     return [key for key in dic if dic[key][3:] == value][0]
 
 def display_origen_filter():
     return st.sidebar.radio('Caegoría de gráficos', ['Origen_turismo', 'Personal_empleado'])
@@ -41,10 +38,6 @@ def display_year_mes(df):
 
     return year, mes
 
-
-# def display_provincia(df, prov):
-#     prov_name = st.sidebar.selectbox('Provincia', prov_list)
-#     return prov_name
 
 # método para mostrar los datos de ocupación turística nacional e internacional en las top 15 provincias como si fuera una pirámide poblacional con graficos de barras
 def display_pyramid_top15(df, year):
@@ -187,50 +180,6 @@ df_nacional_inter = myMain.df_nacional_inter
 prov_list = myMain.prov_list
 prov_dict = myMain.prov_dict
 quitar_acentos = myMain.quitar_acentos
-# provincias = gpd.read_file('provincias.geojson')
-
-# provincias['pName'] = provincias['provincia']
-# provincias.loc[provincias['pName'] == 'La Rioja', 'pName'] = 'Rioja, La'
-# provincias.loc[provincias['pName'] == 'A Coruña', 'pName'] = 'Coruña, A '
-# provincias.loc[provincias['pName'] == 'Las Palmas', 'pName'] = 'Palmas, Las'
-# provincias.loc[provincias['pName'] == 'Illes Balears', 'pName'] = 'Balears, Illes'
-# provincias.loc[provincias['pName'] == 'Alacant', 'pName'] = 'Alicante/Alacant'
-
-# def quitar_acentos(texto):
-#     return unidecode(texto)
-
-
-# ### turismo español vs extranjero
-# pernoct= df3[df3['Viajeros y pernoctaciones']=='Pernoctaciones']
-# df_nacional_inter = pernoct.pivot(index=['Periodo','Comunidades y Ciudades Autónomas', 'Provincias'], columns='Residencia: Nivel 2', values='Total').reset_index()
-# df_nacional_inter['año'] = df_nacional_inter['Periodo'].str[:4]
-# df_nacional_inter['mes'] = df_nacional_inter['Periodo'].str[5:]
-# df_nacional_inter = df_nacional_inter.rename(columns={np.nan: 'Ambos_origenes'})
-
-# df_nacional_inter = df_nacional_inter.dropna(subset=['Provincias', 'Comunidades y Ciudades Autónomas'])
-
-# eliminar = ['18 Ceuta','19 Melilla', '01 Andalucía', '02 Aragón', '05 Canarias', '07 Castilla y León', '08 Castilla - La Mancha', '09 Cataluña','10 Comunitat Valenciana','11 Extremadura','12 Galicia', '16 País Vasco', ]
-# #eliminar = ['01 Andalucía', '02 Aragón', '05 Canarias', '07 Castilla y León', '08 Castilla - La Mancha', '09 Cataluña','10 Comunitat Valenciana','11 Extremadura','12 Galicia', '16 País Vasco', ]
-# df_nacional_inter = df_nacional_inter[~df_nacional_inter.Provincias.isin(eliminar)]
-
-# df_nacional_inter['codProv'] = df_nacional_inter['Provincias'].str.upper()
-# df_nacional_inter['codProv'] = df_nacional_inter['codProv'].str.strip()
-# df_nacional_inter['codProv'] = df_nacional_inter['codProv'].str[3:7].apply(quitar_acentos)
-
-# provincias['codProv'] = provincias['pName'].str.upper()
-# provincias['codProv'] = provincias['codProv'].str.strip()
-# provincias['codProv'] = provincias['codProv'].str[:4].apply(quitar_acentos)
-
-# df_nacional_inter['Ambos_origenes']=df_nacional_inter['Ambos_origenes'].str.replace(',', '').str.replace('.', '')
-# df_nacional_inter['Ambos_origenes']=pd.to_numeric(df_nacional_inter['Ambos_origenes'], errors='coerce')
-# df_nacional_inter['Residentes en España']=df_nacional_inter['Residentes en España'].str.replace(',', '').str.replace('.', '')
-# df_nacional_inter['Residentes en España']=pd.to_numeric(df_nacional_inter['Residentes en España'], errors='coerce')
-# df_nacional_inter['Residentes en el Extranjero']=df_nacional_inter['Residentes en el Extranjero'].str.replace(',', '').str.replace('.', '')
-# df_nacional_inter['Residentes en el Extranjero']=pd.to_numeric(df_nacional_inter['Residentes en el Extranjero'], errors='coerce')
-# df_nacional_inter = df_nacional_inter.rename(columns={'Residentes en España': 'Nacional'})
-# df_nacional_inter = df_nacional_inter.rename(columns={'Residentes en el Extranjero': 'Internacional'})
-# prov_list = list(df_nacional_inter['Provincias'].str[3:].unique())
-# prov_dict = pd.Series(df_nacional_inter[df_nacional_inter["mes"]=="12"].Provincias.values,index=df_nacional_inter[df_nacional_inter["mes"]=="12"].codProv).to_dict()
 
 #dataframeEmpleo
 df2 = pd.read_csv(r'2066.csv',sep=';',encoding="utf-8",on_bad_lines='skip')
@@ -265,6 +214,9 @@ else:
      st.header('Gráficas Empleo')
      year, month = display_year_mes(df_empleo)
      st.subheader(f'Comparativa evolución ocupación turística y personal empleado en hostelería')   
-     display_evolucion_empleo(df_nacional_inter,df_empleo, codProvin, provincia)
+     try:
+        display_evolucion_empleo(df_nacional_inter,df_empleo, codProvin, provincia)
+     except:
+        st.write(f"No hay datos suficientes relativos a {provincia}")
      st.subheader(f'provincias y comunidades con mayor empleo en el sector de hostelería')   
      grafica_donut(df_empleo, year, month)
