@@ -20,6 +20,9 @@ APP_SUB_TITLE = 'Fuente: Ine'
 #modeifico esta variable para que al hacer click en el mapa para seleccionar provincia no se inhabilite el desplegable provincia
 if 'desplegable' not in st.session_state:
     st.session_state['desplegable'] = None
+
+if 'com' not in st.session_state:
+    st.session_state['com'] = None
 #muestro los controles
 @st.cache_data
 def get_keys_with_value(dic, value):
@@ -39,6 +42,13 @@ def display_filtros(df, origen):
 def display_provincia(df, prov):
     prov_name = st.sidebar.selectbox('Provincia', prov_list)
     return prov_name
+
+def display_com(df, com):
+    com_name = st.sidebar.selectbox('Comunidad Autónoma', com_list)
+    return com_name
+
+def display_tipo_mapa():
+    return st.sidebar.radio('Mapa', ['Provincias', 'ComunidadesAutonomas'])
 
 def display_origen_filter():
     return st.sidebar.radio('origen', ['Ambos_origenes', 'Nacional', 'Internacional'])
@@ -87,12 +97,56 @@ def display_map(df, year, month, origen):
         codigo = st_map['last_active_drawing']['properties']['codProv']
     return codigo
 
-def display_datos_ocup(df, year, month, origen, prov_code):
-    df = df[(df['año'] == year) & (df['mes'] == month) & (df['codProv'] == prov_code)]    
 
+def display_map_com(df, year, month, origen):
+
+    df = df[(df['año'] == year) & (df['mes'] == month)]
+    m = folium.Map(location=[40.42,  -3.7], zoom_start=5)
+    print(df)
+
+    df['log_' + origen] = np.log1p(df[origen])
+
+    bins = np.linspace(df['log_' + origen].min(), df['log_' + origen].max(), num=12)
+    coropletas = folium.Choropleth(
+        geo_data=comunidades,
+        name="choropleth",
+        data=df,
+        columns=["codCom", 'log_' + origen],  
+        key_on="properties.codCom",
+        bins=bins,
+        fill_color="Blues",
+        fill_opacity=0.7,
+        line_opacity=1.0,
+        legend_name="Tasa de ocupacion"
+    )
+    coropletas.add_to(m)
+
+    for feature in coropletas.geojson.data['features']:
+       code = feature['properties']['codCom']
+    coropletas.geojson.add_child(folium.features.GeoJsonTooltip(['codCom'], labels=False))
+    
+    folium.LayerControl().add_to(m)
+    st_map = st_folium(m, width=700, height=450)
+    codigo = '00'
+    if st_map['last_active_drawing']:
+        codigo = st_map['last_active_drawing']['properties']['codCom']
+    return codigo
+
+def display_datos_ocup(df, year, month, origen, prov_code):
+    df = df[(df['año'] == year) & (df['mes'] == month) & (df['codProv'] == prov_code)]  
+    
     print(df[origen])
     print(origen)    
     st.subheader(f'Ocupación de tipo {origen} en {prov_name}:')   
+    st.metric('valor', df[origen])
+
+def display_datos_ocup_com(df, year, month, origen, comCod):
+    # df = df[(df['año'] == year) & (df['mes'] == month) & (df['codCom'] == comCod)]    
+    df = df[df['codCom'] == comCod]    
+    print(df[origen])
+    print(df)
+    print(origen)    
+    st.subheader(f'Ocupación de tipo {origen} en {comCod}:')   
     st.metric('valor', df[origen])
     
 def display_grafica(df, year, month, origen, codProvin, provincia):
@@ -119,6 +173,35 @@ def display_grafica(df, year, month, origen, codProvin, provincia):
     ax.set_xlabel('Provincias')
     ax.set_ylabel(origen)
     ax.set_title(f'Provincias en {year}/{month} con mayor ocupación "{format(origen)}" comparadas con {provincia}')
+    ax.tick_params(axis='x', rotation=45)
+    sns.despine()
+
+    st.pyplot(fig)
+
+def display_grafica_ccaa(df, year, month, origen, codComu, comunidad):
+    # df = df[(df['año'] == year) & (df['mes'] == month)]    
+    print(df)
+    df_top = df.nlargest(10, origen)
+    comunidades_top = df_top['codCom']
+    data_top = df_top[origen]
+
+    comunidades = list(comunidades_top)
+    if codComu not in comunidades:
+        comunidades.append(codComu)
+        data_top = list(data_top)
+        data_top.append(df[df['codCom'] == codComu][origen].values[0])
+
+    chart_data = pd.DataFrame({'Comunidades': comunidades, 'Datos': data_top})
+
+    sns.set(style="whitegrid")
+
+    fig, ax = plt.subplots()
+    colors = sns.color_palette("viridis", len(chart_data))
+    sns.barplot(x='Comunidades', y='Datos', data=chart_data, ax=ax, palette=colors)
+
+    ax.set_xlabel('Comunidades')
+    ax.set_ylabel(origen)
+    ax.set_title(f'Comunidades en {year}/{month} con mayor ocupación "{format(origen)}" comparadas con {comunidad}')
     ax.tick_params(axis='x', rotation=45)
     sns.despine()
 
@@ -176,27 +259,89 @@ df_nacional_inter['Residentes en el Extranjero']=pd.to_numeric(df_nacional_inter
 df_nacional_inter = df_nacional_inter.rename(columns={'Residentes en España': 'Nacional'})
 df_nacional_inter = df_nacional_inter.rename(columns={'Residentes en el Extranjero': 'Internacional'})
 
-prov_list = list(df_nacional_inter['Provincias'].str[3:].unique())
 
-prov_dict = pd.Series(df_nacional_inter[df_nacional_inter["mes"]=="12"].Provincias.values,index=df_nacional_inter[df_nacional_inter["mes"]=="12"].codProv).to_dict()
-origen = display_origen_filter()
-
-year, month = display_filtros(df_nacional_inter, origen)
-prov_name = display_provincia(df_nacional_inter, '')
-prov_code= display_map(df_nacional_inter, year, month, origen)
-
-#compruebo si ha cambiado el valor del desplegable o si la modificación de la provincia se ha hecho en el mapa
-if st.session_state['desplegable'] != prov_name or prov_code == '00':
-        # prov_name = prov_dict[]
-        prov_code = get_keys_with_value(prov_dict, prov_name)
-        st.session_state['desplegable'] = prov_name
-else: 
-     prov_name = prov_dict[prov_code][3:]
+comunidades = gpd.read_file('gadm36_ESP_1.shp')
 
 
-display_datos_ocup(df_nacional_inter, year, month, origen, prov_code)
+comunidades['pName'] = comunidades['NAME_1']
+comunidades.loc[comunidades['pName'] == 'Castilla-La Mancha', 'pName'] = 'Mancha'
+comunidades.loc[comunidades['pName'] == 'Castilla y León', 'pName'] = 'León '
+comunidades.loc[comunidades['pName'] == 'Comunidad de Madrid', 'pName'] = 'Madrid'
+comunidades.loc[comunidades['pName'] == 'Islas Baleares', 'pName'] = 'Balears'
+comunidades.loc[comunidades['pName'] == 'Comunidad Foral de Navarra', 'pName'] = 'Navarra'
+comunidades.loc[comunidades['pName'] == 'Comunidad Valenciana', 'pName'] = 'Valencia'
+comunidades.loc[comunidades['pName'] == 'Islas Canarias', 'pName'] = 'Canarias'
+comunidades.loc[comunidades['pName'] == 'Principado de Asturias', 'pName'] = 'Asturias'
 
-display_grafica(df_nacional_inter, year, month, origen, prov_code,prov_dict[prov_code][3:])
+comunidades.loc[comunidades['pName'] == 'La Rioja', 'pName'] = 'Rioja'
+comunidades.loc[comunidades['pName'] == 'Región de Murcia', 'pName'] = 'Murcia'
+
+
+df_nacional_inter['pName'] = df_nacional_inter['Comunidades y Ciudades Autónomas']
+df_nacional_inter.loc[df_nacional_inter['pName'] == '07 Castilla y León', 'pName'] = '00 Leon'
+df_nacional_inter.loc[df_nacional_inter['pName'] == '08 Castilla - La Mancha', 'pName'] = '00 Mancha'
+df_nacional_inter.loc[df_nacional_inter['pName'] == '10 Comunitat Valenciana', 'pName'] = '00 Valencia'
+
+
+df_nacional_inter['codCom'] = df_nacional_inter['pName'].str.upper()
+df_nacional_inter['codCom'] = df_nacional_inter['codCom'].str.strip()
+df_nacional_inter['codCom'] = df_nacional_inter['codCom'].str[3:7].apply(quitar_acentos)
+
+
+comunidades['codCom'] = comunidades['pName'].str.upper()
+comunidades['codCom'] = comunidades['codCom'].str.strip()
+comunidades['codCom'] = comunidades['codCom'].str[:4].apply(quitar_acentos)
+
+data = display_tipo_mapa()
+
+if data == 'Provincias':
+    prov_list = list(df_nacional_inter['Provincias'].str[3:].unique())
+
+    prov_dict = pd.Series(df_nacional_inter[df_nacional_inter["mes"]=="12"].Provincias.values,index=df_nacional_inter[df_nacional_inter["mes"]=="12"].codProv).to_dict()
+    origen = display_origen_filter()
+
+    year, month = display_filtros(df_nacional_inter, origen)
+    prov_name = display_provincia(df_nacional_inter, '')
+    prov_code= display_map(df_nacional_inter, year, month, origen)
+
+    #compruebo si ha cambiado el valor del desplegable o si la modificación de la provincia se ha hecho en el mapa
+    if st.session_state['desplegable'] != prov_name or prov_code == '00':
+            # prov_name = prov_dict[]
+            prov_code = get_keys_with_value(prov_dict, prov_name)
+            st.session_state['desplegable'] = prov_name
+    else: 
+        prov_name = prov_dict[prov_code][3:]
+
+
+    display_datos_ocup(df_nacional_inter, year, month, origen, prov_code)
+
+    display_grafica(df_nacional_inter, year, month, origen, prov_code,prov_dict[prov_code][3:])
+else:
+    com_list = list(df_nacional_inter['Comunidades y Ciudades Autónomas'].str[3:].unique())
+    com_dict = pd.Series(df_nacional_inter[df_nacional_inter["mes"]=="12"]['Comunidades y Ciudades Autónomas'].values,index=df_nacional_inter[df_nacional_inter["mes"]=="12"].codCom).to_dict()
+    origen = display_origen_filter()
+    year, month = display_filtros(df_nacional_inter, origen)
+    media_ocupacion_comunidades = df_nacional_inter[(df_nacional_inter['año'] == year) & (df_nacional_inter['mes'] == month)]
+    media_ocupacion_comunidades = media_ocupacion_comunidades.groupby(['codCom'])[origen].mean().reset_index()
+    print('mm------------------- ',media_ocupacion_comunidades)
+    # map_ocup_com = comunidades.merge(media_ocupacion_comunidades, on='codCom')
+
+   
+    com_name = display_com(media_ocupacion_comunidades, '')
+    com_code= display_map_com(df_nacional_inter, year, month, origen)
+
+    #compruebo si ha cambiado el valor del desplegable o si la modificación de la provincia se ha hecho en el mapa
+    if st.session_state['com'] != com_name or com_code == '00':
+            # prov_name = prov_dict[]
+            com_code = get_keys_with_value(com_dict, com_name)
+            st.session_state['com'] = com_name
+    else: 
+        prov_name = com_dict[com_code][3:]
+
+
+    display_datos_ocup_com(media_ocupacion_comunidades, year, month, origen, com_code)
+
+    display_grafica_ccaa(media_ocupacion_comunidades, year, month, origen, com_code,com_dict[com_code][3:])
 
 #consulto base de datos con openIA para contestar preguntas
 def answer():
