@@ -204,14 +204,14 @@ tipo = display_origen_filter()
 provincia = myMain.display_provincia(df_nacional_inter, '')
 codProvin = myMain.get_keys_with_value(prov_dict, provincia)
 if tipo == "Origen_turismo":
-    st.header('Gráficas Ocupación')
+    st.header('Gráficas ocupación turística')
     year = display_year(df_nacional_inter)
     st.subheader(f'Provincias con mayor ocupación turística')   
     display_pyramid_top15(df_nacional_inter, year)
     st.subheader(f'Evolución de la ocupación turística')   
     display_evolucion_turismo(df_nacional_inter, codProvin)
 else:
-     st.header('Gráficas Empleo')
+     st.header('Gráficas empleo en hostelería')
      year, month = display_year_mes(df_empleo)
      st.subheader(f'Comparativa evolución ocupación turística y personal empleado en hostelería')   
      try:
